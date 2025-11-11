@@ -1,35 +1,47 @@
-// ============================================
+
 // DATA LAYER (localStorage interaction)
 // ============================================
-/** 
-FUNCTION loadNotes():
-    TRY:
-        GET data from localStorage using key 'notes-app-data'
-        IF data exists:
-            PARSE the JSON string to array
-            IF result is an Array:
-                RETURN the array
-            ELSE:
-                LOG warning about invalid data type
-                RETURN empty array
-        ELSE:
-            RETURN empty array
-    CATCH error:
-        LOG error message
-        RETURN empty array
 
-FUNCTION saveNotes(notesArray):
-    CONVERT notesArray to JSON string
-    SAVE to localStorage with key 'notes-app-data'
+function loadNotes () { //return array from localStorage
+    try {
+        const notesJSON = localStorage.getItem('notes-app-data');
+        if (notesJSON) {
+            const notesArray = JSON.parse(notesJSON);
+            if (Array.isArray(notesArray)) {
+                return notesArray;
+            } else {
+                console.warn('Data in localStorage is not an array. Returning empty array.');
+                return [];
+            }
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error loading notes from localStorage:', error);
+        return null;
+    }
+};
 
+function saveNotes (notesArray) { //save array to localStorage
+    try {
+        const notesJSON = JSON.stringify(notesArray);
+        localStorage.setItem('notes-app-data', notesJSON);
+    } catch (error) {
+        console.error('Error saving notes to localStorage:', error);
+    }
+};
 
 // ============================================
 // STATE MANAGEMENT
 // ============================================
-
-DECLARE notes as empty array
-ON initialization:
-    SET notes = loadNotes()
+/** 
+let notes = [];
+const storedNotes = loadNotes();
+if (storedNotes) {
+    notes = storedNotes;
+} else {
+    notes = [];
+}
 
 
 // ============================================
@@ -45,6 +57,9 @@ FUNCTION createNote(title, content):
     PUSH note to notes array
     CALL saveNotes(notes)
     CALL renderNotes()
+
+
+
 
 FUNCTION deleteNote(noteId):
     FILTER notes array to exclude note with matching id
@@ -90,7 +105,7 @@ FUNCTION renderNotes():
 // ============================================
 
 EVENT: When DOM content loaded:
-    
+
     // Add Note Event
     GET reference to #add-note-btn
     ADD click listener:
@@ -104,7 +119,17 @@ EVENT: When DOM content loaded:
         CALL createNote(title, content)
         CLEAR #note-title value
         CLEAR #note-content value
-    
+        
+
+
+    const addNoteBtn = document.getElementById('add-note-btn');
+    addNoteBtn.addEventListener('click', function() {
+
+
+
+
+
+
     
     // Edit & Delete Events (using Event Delegation)
     GET reference to #notes-container
@@ -143,7 +168,7 @@ WHEN page loads:
 
 **🎯 Modern Dev Workflow Notes:**
 
-1. **Event Delegation Usage:** We attach ONE listener to `#notes-container` instead of attaching listeners to every button. This is efficient because:
+1. **Event Delegation Usage:** We attach ONE listener to `#notes-container` 
    - Dynamically created buttons automatically get the handler
    - Reduces memory footprint
    - Follows the principle of "delegate to parent, identify child"
@@ -152,4 +177,4 @@ WHEN page loads:
 ```
    User Action → CRUD Function → saveNotes() → renderNotes()
 
-   **/
+   
