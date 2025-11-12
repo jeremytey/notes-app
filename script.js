@@ -63,35 +63,23 @@ function saveNotes (notesArray) { //save array to localStorage
         notes.push(NoteObject);
         saveNotes(initializeNotes());
         renderNotes();
+    } 
+
+    function deleteNote(NoteId) {
+        notes = notes.filter(note => note.id !== NoteId);
+        saveNotes(notes);
+        renderNotes();
     }
-
-
-    /** 
-
-FUNCTION deleteNote(NoteId):
-    // 1. Update State
-    SET notes = notes array FILTERED by removing the note WHERE note.id EQUALS NoteId
-    
-    // 2. Update Persistence
-    CALL saveNotes(notes)
-    
-    // 3. Update View
-    CALL renderNotes()
-
-
-FUNCTION editNote(NoteId, NewTitle, NewContent):
-    // 1. Locate Target
-    FIND note in notes array WHERE note.id EQUALS NoteId
-    
-    // 2. Update Data and Persistence
-    IF note IS FOUND:
-        SET note.title = NewTitle
-        SET note.content = NewContent
-        CALL saveNotes(notes)
-        
-        // 3. Update View
-        CALL renderNotes()
-
+       
+    function editNote(NoteId, NewTitle, NewContent) {
+        const targetNote = notes.find(note => note.id === NoteId);
+        if (targetNote) {
+            targetNote.title = NewTitle;
+            targetNote.content = NewContent;
+            saveNotes(notes);
+            renderNotes();
+        }
+    }
 
 // ============================================
 // DOM RENDERING
