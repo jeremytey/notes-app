@@ -24,7 +24,7 @@ function loadNotes () { //return array from localStorage
 
 function saveNotes (notesArray) { //save array to localStorage
     try {
-        const notesJSON = JSON.stringify(notesArray);
+        const notesJSON = JSON.stringify(notesArray); //JS array objects to JSON 
         localStorage.setItem('notes-app-data', notesJSON);
     } catch (error) {
         console.error('Error saving notes to localStorage:', error);
@@ -35,44 +35,59 @@ function saveNotes (notesArray) { //save array to localStorage
 // STATE MANAGEMENT
 // ============================================
 /** 
-let notes = [];
-const storedNotes = loadNotes();
-if (storedNotes) {
-    notes = storedNotes;
-} else {
-    notes = [];
-}
+// Initialize the global notes array
+SET notes = []
 
+// Load data from persistent storage
+SET storedNotes = CALL loadNotes()
+
+// Update state if data was successfully loaded
+IF storedNotes IS NOT NULL:
+    SET notes = storedNotes
+ELSE:
+    SET notes = []
 
 // ============================================
 // CRUD OPERATIONS
 // ============================================
-
-FUNCTION createNote(title, content):
-    CREATE note object with:
-        - id: Date.now() (timestamp as unique ID)
-        - title: title parameter
-        - content: content parameter  
-        - createdAt: new Date().toLocaleDateString() (formatted date string)
-    PUSH note to notes array
+FUNCTION createNote(Title, Content):
+    // 1. Create Data Object
+    CREATE NoteObject WITH:
+        - id: CALL Date.now()          // Unique identifier (number)
+        - title: Title
+        - content: Content
+        - createdAt: CALL new Date().toLocaleDateString() // Readable date string
+    
+    // 2. Update State and Persistence
+    PUSH NoteObject TO notes array
     CALL saveNotes(notes)
+    
+    // 3. Update View
     CALL renderNotes()
 
 
-
-
-FUNCTION deleteNote(noteId):
-    FILTER notes array to exclude note with matching id
-    SET notes = filtered result
+FUNCTION deleteNote(NoteId):
+    // 1. Update State
+    SET notes = notes array FILTERED by removing the note WHERE note.id EQUALS NoteId
+    
+    // 2. Update Persistence
     CALL saveNotes(notes)
+    
+    // 3. Update View
     CALL renderNotes()
 
-FUNCTION editNote(noteId, newTitle, newContent):
-    FIND note in notes array where note.id === noteId
-    IF note found:
-        UPDATE note.title = newTitle
-        UPDATE note.content = newContent
+
+FUNCTION editNote(NoteId, NewTitle, NewContent):
+    // 1. Locate Target
+    FIND note in notes array WHERE note.id EQUALS NoteId
+    
+    // 2. Update Data and Persistence
+    IF note IS FOUND:
+        SET note.title = NewTitle
+        SET note.content = NewContent
         CALL saveNotes(notes)
+        
+        // 3. Update View
         CALL renderNotes()
 
 
@@ -81,79 +96,90 @@ FUNCTION editNote(noteId, newTitle, newContent):
 // ============================================
 
 FUNCTION renderNotes():
-    GET reference to #notes-container element
-    CLEAR innerHTML of container
+    // 1. Setup
+    GET element reference TO #notes-container
+    CLEAR inner HTML of #notes-container
     
-    IF notes array is empty:
-        SET innerHTML to empty state message:
-            '<div class="empty-state"><p>No notes yet. Create your first note!</p></div>'
+    // 2. Conditional Rendering (Empty State)
+    IF notes array IS empty:
+        CREATE EmptyStateMarkup: '<div class="empty-state"><p>No notes yet. Create your first note!</p></div>'
+        SET inner HTML of #notes-container TO EmptyStateMarkup
+    
+    // 3. Rendering List
     ELSE:
-        FOR EACH note in notes array:
-            CREATE div element with class "note-card"
-            SET innerHTML with structure:
-                - h3 with note.title
-                - p with class "note-date" showing note.createdAt
-                - p with note.content
-                - div with class "note-actions" containing:
-                    * Edit button with data-id attribute = note.id
-                    * Delete button with data-id attribute = note.id
-            APPEND the note-card div to container
+        FOR EACH NoteObject in notes array:
+            // a. Construct the HTML structure for the note card
+            CREATE NoteCardMarkup WITH:
+                - Outer div (class "note-card")
+                - h3 content EQUALS NoteObject.title
+                - p (class "note-date") content EQUALS NoteObject.createdAt
+                - p content EQUALS NoteObject.content
+                - Action div (class "note-actions") CONTAINING:
+                    - Edit button (class "btn-edit", data-id EQUALS NoteObject.id)
+                    - Delete button (class "btn-delete", data-id EQUALS NoteObject.id)
+            
+            // b. Insert into DOM
+            APPEND NoteCardMarkup TO #notes-container
 
 
 // ============================================
 // EVENT HANDLING
 // ============================================
 
-EVENT: When DOM content loaded:
+EVENT: When DOM content is fully loaded:
 
-    // Add Note Event
-    GET reference to #add-note-btn
-    ADD click listener:
-        GET value from #note-title (trim whitespace)
-        GET value from #note-content (trim whitespace)
+    // --- Add Note Event Setup ---
+    GET element reference TO #add-note-btn
+    ADD CLICK listener TO #add-note-btn:
         
-        IF title is empty OR content is empty:
-            ALERT "Please fill in both title and content"
-            RETURN early (don't create note)
+        // a. Retrieve and Prepare Input
+        GET trimmed Title FROM input #note-title
+        GET trimmed Content FROM textarea #note-content
         
-        CALL createNote(title, content)
-        CLEAR #note-title value
-        CLEAR #note-content value
+        // b. Validation
+        IF Title IS empty OR Content IS empty:
+            ALERT message: "Please fill in both title and content"
+            RETURN
         
-
-
-    const addNoteBtn = document.getElementById('add-note-btn');
-    addNoteBtn.addEventListener('click', function() {
-
-
-
-
-
+        // c. Execution and Cleanup
+        CALL createNote(Title, Content)
+        CLEAR value of #note-title
+        CLEAR value of #note-content
 
     
-    // Edit & Delete Events (using Event Delegation)
-    GET reference to #notes-container
-    ADD click listener:
-        GET the clicked element (event.target)
+    // --- Edit & Delete Events Setup (Delegation) ---
+    GET element reference TO #notes-container
+    ADD CLICK listener TO #notes-container:
         
-        IF clicked element has class "btn-delete":
-            GET data-id attribute value
-            CONVERT to number
-            CALL deleteNote(id)
+        SET ClickedElement = Event.target
         
-        IF clicked element has class "btn-edit":
-            GET data-id attribute value
-            CONVERT to number
+        // Identify the note ID from the clicked action button
+        SET NoteId = GET data-id attribute FROM ClickedElement
+        SET NoteIdNumber = CONVERT NoteId TO Number
+        
+        
+        // --- DELETE Logic ---
+        IF ClickedElement HAS class "btn-delete":
+            CALL deleteNote(NoteIdNumber)
+        
+        
+        // --- EDIT Logic ---
+        IF ClickedElement HAS class "btn-edit":
             
-            FIND the note with matching id in notes array
-            IF note found:
-                PROMPT user with "Edit title:" (prefill with current note.title)
-                PROMPT user with "Edit content:" (prefill with current note.content)
+            FIND TargetNote in notes array WHERE note.id EQUALS NoteIdNumber
+            
+            IF TargetNote IS FOUND:
+                // Prompt User for new values
+                SET NewTitle = PROMPT user with "Edit title:" (prefill with TargetNote.title)
+                SET NewContent = PROMPT user with "Edit content:" (prefill with TargetNote.content)
                 
-                IF user didn't cancel prompts:
-                    TRIM the new values
-                    IF newTitle is not empty AND newContent is not empty:
-                        CALL editNote(id, newTitle, newContent)
+                // Process and Validate New Input
+                IF NewTitle IS NOT NULL AND NewContent IS NOT NULL: // Check if user hit OK/didn't cancel
+                    SET TrimmedNewTitle = TRIM NewTitle
+                    SET TrimmedNewContent = TRIM NewContent
+                    
+                    IF TrimmedNewTitle IS NOT empty AND TrimmedNewContent IS NOT empty:
+                        CALL editNote(NoteIdNumber, TrimmedNewTitle, TrimmedNewContent)
 
 
 // ============================================
@@ -162,16 +188,8 @@ EVENT: When DOM content loaded:
 
 WHEN page loads:
     CALL renderNotes() to display any existing notes
-```
 
----
-
-**🎯 Modern Dev Workflow Notes:**
-
-1. **Event Delegation Usage:** We attach ONE listener to `#notes-container` 
-   - Dynamically created buttons automatically get the handler
-   - Reduces memory footprint
-   - Follows the principle of "delegate to parent, identify child"
+    
 
 2. **Data Flow Pattern:**
 ```
