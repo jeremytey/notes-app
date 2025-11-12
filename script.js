@@ -34,37 +34,39 @@ function saveNotes (notesArray) { //save array to localStorage
 // ============================================
 // STATE MANAGEMENT
 // ============================================
-/** 
-// Initialize the global notes array
-SET notes = []
+    let notes = []  
+    function initializeNotes() {
+    try{
+        let storedNotes = loadNotes();
+        if (storedNotes !== null) {
+            notes = storedNotes;
+        } 
+        } catch (error) {
+        console.error('Error initializing notes:', error);
+        notes = [];
+        }
+    }
 
-// Load data from persistent storage
-SET storedNotes = CALL loadNotes()
 
-// Update state if data was successfully loaded
-IF storedNotes IS NOT NULL:
-    SET notes = storedNotes
-ELSE:
-    SET notes = []
 
 // ============================================
 // CRUD OPERATIONS
 // ============================================
-FUNCTION createNote(Title, Content):
-    // 1. Create Data Object
-    CREATE NoteObject WITH:
-        - id: CALL Date.now()          // Unique identifier (number)
-        - title: Title
-        - content: Content
-        - createdAt: CALL new Date().toLocaleDateString() // Readable date string
-    
-    // 2. Update State and Persistence
-    PUSH NoteObject TO notes array
-    CALL saveNotes(notes)
-    
-    // 3. Update View
-    CALL renderNotes()
+    function createNote(Title, Content) {
+        const NoteObject = {
+            id: Date.now(), // Unique identifier (number)
+            title: Title,
+            content: Content,
+            createdAt: new Date().toLocaleDateString() // Readable date string
+        };
 
+        notes.push(NoteObject);
+        saveNotes(initializeNotes());
+        renderNotes();
+    }
+
+
+    /** 
 
 FUNCTION deleteNote(NoteId):
     // 1. Update State
@@ -181,18 +183,10 @@ EVENT: When DOM content is fully loaded:
                     IF TrimmedNewTitle IS NOT empty AND TrimmedNewContent IS NOT empty:
                         CALL editNote(NoteIdNumber, TrimmedNewTitle, TrimmedNewContent)
 
-
+*/
 // ============================================
 // INITIALIZATION
 // ============================================
-
-WHEN page loads:
-    CALL renderNotes() to display any existing notes
-
-    
-
-2. **Data Flow Pattern:**
-```
-   User Action → CRUD Function → saveNotes() → renderNotes()
-
-   
+    document.addEventListener('DOMContentLoaded', async() => {
+        await renderNotes();
+    });
