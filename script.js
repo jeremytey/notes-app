@@ -18,9 +18,10 @@ function loadNotes () { //return array from localStorage
         }
     } catch (error) {
         console.error('Error loading notes from localStorage:', error);
-        return null;
+        return [];
     }
 };
+console.log(loadNotes());
 
 function saveNotes (notesArray) { //save array to localStorage
     try {
@@ -61,7 +62,7 @@ function saveNotes (notesArray) { //save array to localStorage
         };
 
         notes.push(NoteObject);
-        saveNotes(initializeNotes());
+        saveNotes(notes);
         renderNotes();
     } 
 
@@ -84,61 +85,61 @@ function saveNotes (notesArray) { //save array to localStorage
 // ============================================
 // DOM RENDERING
 // ============================================
+    function renderNotes() {
+    const notesContainer = document.querySelector('#notes-container');
+    notesContainer.innerHTML = '';
 
-FUNCTION renderNotes():
-    // 1. Setup
-    GET element reference TO #notes-container
-    CLEAR inner HTML of #notes-container
-    
-    // 2. Conditional Rendering (Empty State)
-    IF notes array IS empty:
-        CREATE EmptyStateMarkup: '<div class="empty-state"><p>No notes yet. Create your first note!</p></div>'
-        SET inner HTML of #notes-container TO EmptyStateMarkup
-    
-    // 3. Rendering List
-    ELSE:
-        FOR EACH NoteObject in notes array:
-            // a. Construct the HTML structure for the note card
-            CREATE NoteCardMarkup WITH:
-                - Outer div (class "note-card")
-                - h3 content EQUALS NoteObject.title
-                - p (class "note-date") content EQUALS NoteObject.createdAt
-                - p content EQUALS NoteObject.content
-                - Action div (class "note-actions") CONTAINING:
-                    - Edit button (class "btn-edit", data-id EQUALS NoteObject.id)
-                    - Delete button (class "btn-delete", data-id EQUALS NoteObject.id)
-            
-            // b. Insert into DOM
-            APPEND NoteCardMarkup TO #notes-container
-
-
+    if (notes.length === 0) {
+        const emptyStateMarkup = `
+            <div class="empty-state">
+                <p>No notes yet. Create your first note!</p>
+            </div>
+        `;
+        notesContainer.innerHTML = emptyStateMarkup;
+    } else {
+        notes.forEach(note => {
+            const noteCardMarkup = `
+                <div class="note-card">
+                    <h3>${note.title}</h3>
+                    <p class="note-date">${note.createdAt}</p>
+                    <p>${note.content}</p>
+                    <div class="note-actions">
+                        <button class="btn-edit" data-id="${note.id}">Edit</button>
+                        <button class="btn-delete" data-id="${note.id}">Delete</button>
+                    </div>
+                </div>
+            `;
+            notesContainer.insertAdjacentHTML('beforeend', noteCardMarkup);
+        }
+        );
+    }
+}
 // ============================================
 // EVENT HANDLING
 // ============================================
 
-EVENT: When DOM content is fully loaded:
+const domContentLoadedHandler = document.addEventListener('DOMContentLoaded', function() {
+    const addNoteBtn = document.querySelector('#add-note-btn');
+    const noteTitleInput = document.querySelector('#note-title');
+    const noteContentInput = document.querySelector('#note-content');
+    const notesContainer = document.querySelector('#notes-container');
 
-    // --- Add Note Event Setup ---
-    GET element reference TO #add-note-btn
-    ADD CLICK listener TO #add-note-btn:
-        
-        // a. Retrieve and Prepare Input
-        GET trimmed Title FROM input #note-title
-        GET trimmed Content FROM textarea #note-content
-        
-        // b. Validation
-        IF Title IS empty OR Content IS empty:
-            ALERT message: "Please fill in both title and content"
-            RETURN
-        
-        // c. Execution and Cleanup
-        CALL createNote(Title, Content)
-        CLEAR value of #note-title
-        CLEAR value of #note-content
+    addNoteBtn.addEventListener('click', function() {
+        const Title = noteTitleInput.value.trim();
+        const Content = noteContentInput.value.trim();
+        if (Title === '' || Content === '') {
+            alert('Please fill in both title and content');
+            return;
+        } else{
+            createNote(Title, Content);
+            noteTitleInput.value = '';
+            noteContentInput.value = '';
+        }
+    });
 
     
+    
     // --- Edit & Delete Events Setup (Delegation) ---
-    GET element reference TO #notes-container
     ADD CLICK listener TO #notes-container:
         
         SET ClickedElement = Event.target
@@ -171,10 +172,11 @@ EVENT: When DOM content is fully loaded:
                     IF TrimmedNewTitle IS NOT empty AND TrimmedNewContent IS NOT empty:
                         CALL editNote(NoteIdNumber, TrimmedNewTitle, TrimmedNewContent)
 
-*/
+
 // ============================================
 // INITIALIZATION
 // ============================================
-    document.addEventListener('DOMContentLoaded', async() => {
-        await renderNotes();
+    document.addEventListener('DOMContentLoaded', function() {
+         renderNotes();
     });
+    initializeNotes();
