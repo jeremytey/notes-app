@@ -21,7 +21,6 @@ function loadNotes () { //return array from localStorage
         return [];
     }
 };
-console.log(loadNotes());
 
 function saveNotes (notesArray) { //save array to localStorage
     try {
@@ -47,7 +46,6 @@ function saveNotes (notesArray) { //save array to localStorage
         notes = [];
         }
     }
-
 
 
 // ============================================
@@ -77,7 +75,7 @@ function saveNotes (notesArray) { //save array to localStorage
         if (targetNote) {
             targetNote.title = NewTitle;
             targetNote.content = NewContent;
-            saveNotes(notes);
+            saveNotes(notes);         
             renderNotes();
         }
     }
