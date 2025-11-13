@@ -137,40 +137,32 @@ const domContentLoadedHandler = document.addEventListener('DOMContentLoaded', fu
         }
     });
 
-    
-    
-    // --- Edit & Delete Events Setup (Delegation) ---
-    ADD CLICK listener TO #notes-container:
+    //logic for edit and delete buttons using event delegation (targeting parent container)
+    notesContainer.addEventListener('click', function(event) {
+        const ClickedElement = event.target;
+        const noteID = ClickedElement.getAttribute('data-id');
+        const noteIDNumber = Number(noteID);
+
+        if (ClickedElement.classList.contains('btn-delete')) {
+            deleteNote(noteIDNumber);
+            return;
+        }
         
-        SET ClickedElement = Event.target
-        
-        // Identify the note ID from the clicked action button
-        SET NoteId = GET data-id attribute FROM ClickedElement
-        SET NoteIdNumber = CONVERT NoteId TO Number
-        
-        
-        // --- DELETE Logic ---
-        IF ClickedElement HAS class "btn-delete":
-            CALL deleteNote(NoteIdNumber)
-        
-        
-        // --- EDIT Logic ---
-        IF ClickedElement HAS class "btn-edit":
-            
-            FIND TargetNote in notes array WHERE note.id EQUALS NoteIdNumber
-            
-            IF TargetNote IS FOUND:
-                // Prompt User for new values
-                SET NewTitle = PROMPT user with "Edit title:" (prefill with TargetNote.title)
-                SET NewContent = PROMPT user with "Edit content:" (prefill with TargetNote.content)
-                
-                // Process and Validate New Input
-                IF NewTitle IS NOT NULL AND NewContent IS NOT NULL: // Check if user hit OK/didn't cancel
-                    SET TrimmedNewTitle = TRIM NewTitle
-                    SET TrimmedNewContent = TRIM NewContent
-                    
-                    IF TrimmedNewTitle IS NOT empty AND TrimmedNewContent IS NOT empty:
-                        CALL editNote(NoteIdNumber, TrimmedNewTitle, TrimmedNewContent)
+        if (ClickedElement.classList.contains('btn-edit')) {
+            const TargetNote = notes.find(note => note.id === noteIDNumber);
+            if (TargetNote) {
+                const NewTitle = prompt('Edit title:', TargetNote.title);
+                const NewContent = prompt('Edit content:', TargetNote.content);
+                if (NewTitle !== null && NewContent !== null) {
+                    const TrimmedNewTitle = NewTitle.trim();
+                    const TrimmedNewContent = NewContent.trim();
+                    if (TrimmedNewTitle !== '' && TrimmedNewContent !== '') {
+                        editNote(noteIDNumber, TrimmedNewTitle, TrimmedNewContent);
+                    }
+                }
+            }
+        }
+    });
 
 
 // ============================================
@@ -180,3 +172,4 @@ const domContentLoadedHandler = document.addEventListener('DOMContentLoaded', fu
          renderNotes();
     });
     initializeNotes();
+});
