@@ -116,7 +116,6 @@ function saveNotes (notesArray) { //save array to localStorage
 // EVENT HANDLING
 // ============================================
 
-const domContentLoadedHandler = document.addEventListener('DOMContentLoaded', function() {
     const addNoteBtn = document.querySelector('#add-note-btn');
     const noteTitleInput = document.querySelector('#note-title');
     const noteContentInput = document.querySelector('#note-content');
@@ -170,4 +169,4 @@ const domContentLoadedHandler = document.addEventListener('DOMContentLoaded', fu
          renderNotes();
     });
     initializeNotes();
-});
+
